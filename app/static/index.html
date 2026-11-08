@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbound Lead Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="dot"></span> Inbound Lead Agent</div>
+  <nav class="tabs">
+    <button data-tab="leads" class="active">Leads</button>
+    <button data-tab="drafts">Approvals <span id="draftBadge" class="badge hidden">0</span></button>
+    <button data-tab="bills">Bills</button>
+    <button data-tab="agent">Agent</button>
+    <button data-tab="settings">Mailbox &amp; Schedule</button>
+    <button data-tab="activity">Activity</button>
+  </nav>
+  <div class="runbox">
+    <span id="runStatus" class="muted small"></span>
+    <button id="runNow" class="btn primary">Check inbox now</button>
+  </div>
+</header>
+
+<main>
+  <!-- LEADS -->
+  <section id="tab-leads" class="tab active">
+    <div class="stats" id="stats"></div>
+
+    <div id="dropzone" class="dropzone">
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden>
+      <div><strong>Drop your leads Excel here</strong> or <a href="#" id="browse">browse</a></div>
+      <div class="muted small">Columns recognised: Email (required), Name, Company, Lead Status, Last Message Sent, Meeting Details, Notes. Other columns are kept and exported back.</div>
+      <div id="importResult" class="small"></div>
+    </div>
+
+    <div class="toolbar">
+      <input id="search" placeholder="Search email, name, company…">
+      <select id="statusFilter"><option value="">All statuses</option></select>
+      <div class="spacer"></div>
+      <button class="btn primary" id="newEmail">&#9993; New email</button>
+      <button class="btn" id="bulkOutreach" title="The AI writes a first email for every New lead you have never emailed. They wait in Approvals.">Write first emails to New leads</button>
+      <a class="btn" href="/api/leads.xlsx">Export to Excel</a>
+    </div>
+
+    <div class="tablewrap">
+      <table id="leadTable">
+        <thead><tr>
+          <th>Lead</th><th>Status</th><th>Last message sent</th><th>Meeting</th><th>Next action</th><th>Updated</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="emptyLeads" class="empty hidden">No leads yet — drop an Excel file above, or let the agent pick up new inbound emails.</div>
+    </div>
+  </section>
+
+  <!-- DRAFTS -->
+  <section id="tab-drafts" class="tab">
+    <p class="muted">Emails the agent wrote while <em>auto-send</em> is off: replies, first emails and follow-ups. Edit, then send — or discard.</p>
+    <h2>Lead emails</h2>
+    <div id="draftList"></div>
+    <h2>Vendor bill confirmations</h2>
+    <div id="noticeList"></div>
+  </section>
+
+  <!-- BILLS -->
+  <section id="tab-bills" class="tab">
+    <div class="stats" id="billStats"></div>
+    <div id="openTotals" class="muted small" style="margin:-6px 0 14px"></div>
+    <div class="toolbar">
+      <input id="billSearch" placeholder="Search vendor, invoice #, sender…">
+      <select id="billStatusFilter"><option value="">All statuses</option></select>
+      <div class="spacer"></div>
+      <a class="btn" href="/api/bills.xlsx">Export to Excel</a>
+    </div>
+    <div class="tablewrap">
+      <table id="billTable">
+        <thead><tr>
+          <th>Vendor</th><th>Invoice #</th><th>Type</th><th class="num">Amount</th><th>Due</th><th>Status</th><th>Received</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="emptyBills" class="empty hidden">No bills yet. Invoices, receipts and payment confirmations that arrive in the inbox show up here automatically.</div>
+    </div>
+  </section>
+
+  <!-- AGENT -->
+  <section id="tab-agent" class="tab">
+    <form id="agentForm" class="card form">
+      <h2>AI model</h2>
+      <div class="grid2">
+        <label>Provider<select name="llm_provider" id="llmProvider"></select></label>
+        <label>Model<input name="llm_model" id="llmModel" placeholder="provider default">
+          <span class="hint">Leave blank for the default, or type any model name the provider serves.</span></label>
+      </div>
+      <div class="grid2">
+        <label id="baseUrlWrap">Base URL<input name="llm_base_url" id="llmBaseUrl" placeholder="">
+          <span class="hint">Any OpenAI-compatible endpoint (Azure, Together, vLLM, a proxy…).</span></label>
+        <label id="keyWrap">API key<input name="llm_api_key" type="password" autocomplete="new-password" placeholder="leave blank to keep current">
+          <span class="hint" id="keyHint"></span></label>
+      </div>
+      <div class="actions"><button type="button" id="testLlm" class="btn">Test model</button><span id="llmResult" class="small"></span></div>
+
+      <h2>Who is the agent acting as?</h2>
+      <div class="grid2">
+        <label>Agent role<input name="agent_role" placeholder="Sales Development Representative"></label>
+        <label>Company name<input name="company_name" placeholder="Acme Analytics"></label>
+      </div>
+      <label>Company context
+        <textarea name="company_context" rows="10" placeholder="What you sell, who it's for, pricing, packages, differentiators, case studies, FAQs, things the agent must never promise…"></textarea>
+        <span class="hint">The agent only states facts found here. Anything else it will offer to confirm.</span>
+      </label>
+      <div class="grid2">
+        <label>Goal<input name="goal" placeholder="Qualify the lead and book a discovery call."></label>
+        <label>Tone<input name="tone" placeholder="Warm, concise, professional"></label>
+      </div>
+      <div class="grid2">
+        <label>Meeting / booking link<input name="meeting_link" placeholder="https://calendly.com/you/30min"></label>
+        <label>Sender display name<input name="sender_name" placeholder="Pujan from Acme"></label>
+      </div>
+      <label>Email signature<textarea name="signature" rows="3" placeholder="Pujan Lamsal&#10;Acme Analytics · +1 555 0100"></textarea></label>
+      <div class="actions"><button class="btn primary">Save agent</button><span class="saved muted small"></span></div>
+    </form>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-settings" class="tab">
+    <form id="settingsForm" class="card form">
+      <h2>Mailbox (app password)</h2>
+      <div class="grid2">
+        <label>Email address<input name="email_address" type="email" placeholder="you@gmail.com"></label>
+        <label>App password<input name="app_password" type="password" placeholder="leave blank to keep current" autocomplete="new-password">
+          <span class="hint" id="pwdHint"></span></label>
+      </div>
+      <div class="grid4">
+        <label>IMAP host<input name="imap_host"></label>
+        <label>IMAP port<input name="imap_port" type="number"></label>
+        <label>SMTP host<input name="smtp_host"></label>
+        <label>SMTP port<input name="smtp_port" type="number"></label>
+      </div>
+      <p class="hint">Gmail: enable 2-Step Verification, then create an app password at myaccount.google.com/apppasswords. Outlook: smtp-mail.outlook.com / outlook.office365.com, port 587.</p>
+      <div class="actions"><button type="button" id="testConn" class="btn">Test login</button><span id="testResult" class="small"></span></div>
+
+      <h2>AI privacy check</h2>
+      <label class="toggle"><input type="checkbox" name="llm_allowlist_enabled"> <span><strong>Only send emails from these senders to the AI</strong> <em class="muted">(everything else is skipped before the model and left unread)</em></span></label>
+      <label>Allowed senders<textarea name="llm_allowlist" rows="3" placeholder="client@example.com&#10;@trusted-company.com"></textarea>
+        <span class="hint">One per line. A full address, or <code>@domain.com</code> to allow a whole domain. This only controls which incoming emails the AI may read. You can still write to anyone; their replies just won't be read by the AI unless they're listed here.</span></label>
+
+      <h2>Automation</h2>
+      <div class="grid2">
+        <label>Check inbox every
+          <select name="check_interval_minutes">
+            <option value="5">5 minutes</option><option value="15">15 minutes</option>
+            <option value="30">30 minutes</option><option value="60">1 hour</option>
+            <option value="120">2 hours</option><option value="240">4 hours</option>
+            <option value="720">12 hours</option><option value="1440">Once a day</option>
+          </select></label>
+        <label>Look back (days) for unread mail<input name="lookback_days" type="number" min="1" max="30"></label>
+      </div>
+      <label class="toggle"><input type="checkbox" name="scheduler_enabled"> <span>Run automatically on this schedule</span></label>
+      <label class="toggle"><input type="checkbox" name="auto_send"> <span>Auto-send replies <em class="muted">(off = replies wait in Approvals)</em></span></label>
+      <h2>Writing &amp; follow-ups</h2>
+      <label class="toggle"><input type="checkbox" name="followup_enabled"> <span><strong>Follow up automatically</strong> when a lead hasn't replied <em class="muted">(sent in the same email thread)</em></span></label>
+      <div class="grid2">
+        <label>Follow up after (days of no reply)<input name="followup_after_days" type="number" min="1" max="60"></label>
+        <label>Maximum follow-ups<input name="followup_max" type="number" min="1" max="10">
+          <span class="hint">The last one politely closes the loop. The count resets whenever the lead replies.</span></label>
+      </div>
+      <label class="toggle"><input type="checkbox" name="auto_outreach"> <span>Write a first email automatically for <strong>New</strong> leads we've never emailed</span></label>
+      <p class="hint">Follow-ups are skipped for leads that are Won, Lost, Not Interested or have a meeting scheduled, and for leads with a draft already waiting. With <em>Auto-send</em> off, everything waits in Approvals. <a href="#" id="runFollowups">Write due follow-ups now</a> <span id="followupResult"></span></p>
+
+      <h2>Inbox handling</h2>
+      <label class="toggle"><input type="checkbox" name="accept_new_leads"> <span>Treat emails from unknown senders as new inbound leads <em class="muted">(the agent filters out non-sales mail)</em></span></label>
+      <label class="toggle"><input type="checkbox" name="bill_tracking"> <span>Track bills, invoices &amp; receipts <em class="muted">(read from incoming mail and PDF attachments)</em></span></label>
+      <label class="toggle"><input type="checkbox" name="bill_ack_enabled"> <span>Email vendors a confirmation when a bill is…</span></label>
+      <div class="ackstatuses" id="ackStatuses"></div>
+      <label class="toggle"><input type="checkbox" name="bill_ack_auto_send"> <span>Auto-send vendor confirmations <em class="muted">(off = they wait in Approvals)</em></span></label>
+      <div class="actions"><button class="btn primary">Save settings</button><span class="saved muted small"></span></div>
+      <p class="muted small" id="scheduleInfo"></p>
+    </form>
+  </section>
+
+  <!-- ACTIVITY -->
+  <section id="tab-activity" class="tab">
+    <div class="card"><ul id="activityList" class="activity"></ul></div>
+  </section>
+</main>
+
+<!-- Lead drawer -->
+<aside id="drawer" class="drawer hidden">
+  <div class="drawer-head">
+    <div><h3 id="dTitle"></h3><div id="dSub" class="muted small"></div></div>
+    <button class="btn ghost" id="dClose">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="grid2">
+      <label>Status<select id="dStatus"></select></label>
+      <label>Meeting details<input id="dMeeting"></label>
+    </div>
+    <label>Notes<textarea id="dNotes" rows="2"></textarea></label>
+    <div class="actions"><button class="btn primary" id="dSave">Save</button><button class="btn danger" id="dDelete">Delete lead</button></div>
+    <div id="dSummary" class="summary"></div>
+    <div class="compose">
+      <h4>Write an email</h4>
+      <label>What to write<select id="cKind">
+        <option value="auto">Next email (first email, or a follow-up if we've written before)</option>
+        <option value="outreach">First email (starts a new thread)</option>
+        <option value="followup">Follow-up in the thread</option>
+        <option value="custom">Custom email from my instructions</option>
+      </select></label>
+      <label>Instructions for the AI <span class="muted small">(optional, required for custom)</span>
+        <textarea id="cInstr" rows="2" placeholder="e.g. mention the 14-day free trial and ask about their timeline"></textarea></label>
+      <div class="actions"><button class="btn primary" id="cWrite">Write with AI</button><span id="cHint" class="muted small"></span></div>
+    </div>
+    <h4>Conversation</h4>
+    <div id="dThread" class="thread"></div>
+  </div>
+</aside>
+
+<!-- Bill drawer -->
+<aside id="billDrawer" class="drawer hidden">
+  <div class="drawer-head">
+    <div><h3 id="bTitle"></h3><div id="bSub" class="muted small"></div></div>
+    <button class="btn ghost" id="bClose">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="grid2">
+      <label>Status<select id="bStatus"></select></label>
+      <label>Due date<input id="bDue" type="date"></label>
+    </div>
+    <div class="grid2">
+      <label>Amount<input id="bAmount" type="number" step="0.01"></label>
+      <label>Currency<input id="bCurrency" maxlength="5"></label>
+    </div>
+    <label>Notes<textarea id="bNotes" rows="2"></textarea></label>
+    <div class="actions"><button class="btn primary" id="bSave">Save</button><button class="btn" id="bNotice">Send confirmation</button><button class="btn danger" id="bDelete">Delete</button></div>
+    <div id="bNoticeHint" class="muted small"></div>
+    <div id="bSummary" class="summary"></div>
+    <h4>Status history</h4>
+    <ul id="bHistory" class="activity"></ul>
+  </div>
+</aside>
+
+<!-- New email dialog -->
+<dialog id="newDlg">
+  <form id="newForm" class="form" method="dialog">
+    <h3>New email</h3>
+    <p class="muted small">Write to a lead (or anyone: they're added as a lead). The draft opens for you to edit and send.</p>
+    <label>To<input name="email" type="email" required placeholder="name@company.com"></label>
+    <div class="grid2">
+      <label>Name <span class="muted small">(optional)</span><input name="name"></label>
+      <label>Company <span class="muted small">(optional)</span><input name="company"></label>
+    </div>
+    <label>What should it say? <span class="muted small">(optional)</span>
+      <textarea name="instructions" rows="3" placeholder="e.g. intro after meeting at the trade fair, offer a 20-minute demo"></textarea></label>
+    <div class="actions"><button class="btn primary" value="write" id="newWrite">Write with AI</button><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><span id="newHint" class="muted small"></span></div>
+  </form>
+</dialog>
+
+<!-- Shared message / confirm / input dialog (see showDialog in app.js) -->
+<dialog id="msgDlg">
+  <form id="msgForm" class="form" method="dialog">
+    <h3 id="msgTitle"></h3>
+    <p id="msgText" class="msg-text"></p>
+    <label id="msgInputWrap" class="hidden"><span id="msgInputLabel"></span><textarea id="msgInput" rows="3"></textarea></label>
+    <div class="actions">
+      <button class="btn primary" value="ok" id="msgOk">OK</button>
+      <button class="btn ghost" value="cancel" id="msgCancel" formnovalidate>Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
