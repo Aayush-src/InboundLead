@@ -6,19 +6,63 @@ An AI sales agent that watches your inbox, reads replies from leads, updates the
 
 ## Quick start
 
+New to this? Follow **[guide.md](guide.md)**. It walks through everything step by step, including installing Python and Git, getting a Gmail app password and getting an AI API key.
+
+You need **Python 3.11 or newer** and **Git**. Pick the commands for your system.
+
+### Windows (PowerShell)
+
 ```powershell
-copy .env.example .env      # then fill in ANTHROPIC_API_KEY, EMAIL_ADDRESS, EMAIL_APP_PASSWORD
-python -m venv .venv        # first time only
-.\.venv\Scripts\pip install -r requirements.txt   # first time only
-.\.venv\Scripts\Activate.ps1   # each new terminal
-uvicorn main:app --reload      # http://127.0.0.1:8000  (or: python main.py)
+git clone https://github.com/Aayush-src/InboundLead.git
+cd InboundLead
+copy .env.example .env                                    # then edit .env: notepad .env
+python -m venv .venv                                      # first time only
+.\.venv\Scripts\python -m pip install -r requirements.txt  # first time only
+python main.py                                            # open http://127.0.0.1:8000
 ```
 
-1. **Mailbox & Schedule**: enter your email and app password, then click **Test login**. Pick how often to check the inbox (every 5 minutes up to once a day) and turn on **Run automatically**.
-2. **Agent**: describe who the agent is acting for: role, company, what you sell, pricing, FAQs, goal, tone, booking link and signature. The agent only states facts you give it here.
+If `python` isn't found, try `py` instead (for example `py -m venv .venv` and `py main.py`).
+
+### macOS (Terminal)
+
+```bash
+git clone https://github.com/Aayush-src/InboundLead.git
+cd InboundLead
+cp .env.example .env                                      # then edit .env: open -e .env
+python3 -m venv .venv                                     # first time only
+.venv/bin/python -m pip install -r requirements.txt       # first time only
+python3 main.py                                           # open http://127.0.0.1:8000
+```
+
+### Linux (Ubuntu / Debian / Fedora / Arch …)
+
+```bash
+# first time only: install Python, venv and Git if you don't have them
+sudo apt install python3 python3-venv python3-pip git     # Ubuntu / Debian / Mint
+# sudo dnf install python3 python3-pip git                # Fedora / RHEL
+# sudo pacman -S python python-pip git                    # Arch / Manjaro
+
+git clone https://github.com/Aayush-src/InboundLead.git
+cd InboundLead
+cp .env.example .env                                      # then edit .env: nano .env
+python3 -m venv .venv                                     # first time only
+.venv/bin/python -m pip install -r requirements.txt       # first time only
+python3 main.py                                           # open http://127.0.0.1:8000
+```
+
+**On every system:**
+- In `.env`, fill in `EMAIL_ADDRESS`, `EMAIL_APP_PASSWORD` and the API key for **one** AI provider (for example `ANTHROPIC_API_KEY`). You can also enter these in the app instead.
+- `python main.py` automatically uses the `.venv`, so you never need to activate it. Developers who prefer to activate it can run `uvicorn main:app --reload` after activating (`.\.venv\Scripts\Activate.ps1` on Windows, `source .venv/bin/activate` on macOS/Linux).
+- Keep the terminal open while you use the app. Press **Ctrl + C** to stop it.
+- To update later, run `git pull`, then run the `pip install` line again.
+
+### First-time setup in the browser
+
+1. **Mailbox & Schedule**: enter your email and app password, click **Save settings**, then **Test login**. Pick how often to check the inbox (every 5 minutes up to once a day) and turn on **Run automatically on this schedule**. Optionally, turn on the **AI privacy check** so only senders you list are ever read by the AI.
+2. **Agent**: pick your AI **Provider**, add the API key if it isn't in `.env`, and click **Test model**. Then describe who the agent is acting for: role, company, what you sell, pricing, FAQs, goal, tone, booking link and signature. The agent only states facts you give it here.
 3. **Leads**: drop your Excel or CSV file on the page. **Email** is the only required column. Columns like Name, Company, Lead Status, Last Message Sent and Meeting Details are recognised automatically, and any other columns are kept.
-4. Click **Check inbox now**, or wait for the schedule. Replies show up in **Approvals** for you to edit and send. To skip review, turn on **Auto-send**.
-5. **Export to Excel** downloads the updated sheet. It includes status, last message sent and received, meeting details, the AI summary, the next action, and your original extra columns.
+4. Click **Check inbox now**, or wait for the schedule. Replies show up in **Approvals** for you to edit and send. To skip review, turn on **Auto-send replies**.
+5. **Export to Excel** downloads the updated sheet. It includes the status, last message sent and received, last contacted and reply dates, meeting details, sentiment, the AI summary, the next action, notes, and your original extra columns.
 
 ## Writing emails & follow-ups
 

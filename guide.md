@@ -5,7 +5,7 @@ This guide takes you from nothing to a working AI sales assistant that reads you
 **Time needed:** about 30–45 minutes the first time.
 
 **What you'll need:**
-- A computer running Windows 10/11 or a Mac
+- A computer running Windows 10/11, macOS or Linux (Ubuntu, Debian, Fedora, Mint, Arch…)
 - A Gmail account (the one your leads email you at)
 - A mobile phone (Google uses it to confirm it's you)
 - A credit or debit card for the AI service (most charge a few cents per email; one option is free)
@@ -43,7 +43,13 @@ A few steps ask you to type commands. You type them into a window called the **t
 2. Type `terminal`.
 3. Press **Enter**. A white or black window opens. That's the terminal.
 
-**How to run a command:** copy the grey command text from this guide, click inside the terminal, paste it (Windows: right-click; Mac: **⌘ + V**) and press **Enter**. Wait until the terminal stops printing text before you type the next one.
+**Linux**
+1. Press **Ctrl + Alt + T**. On most systems (Ubuntu, Mint, Debian…) the terminal opens straight away.
+2. If nothing happens, open your apps menu, search for `terminal` and click it.
+
+**How to run a command:** copy the grey command text from this guide, click inside the terminal, paste it (Windows: right-click; Mac: **⌘ + V**; Linux: **Ctrl + Shift + V**) and press **Enter**.
+
+> **Linux only:** commands starting with `sudo` ask for **your computer's login password**. Nothing appears on screen while you type it, not even dots. That's normal. Type it and press **Enter**. Wait until the terminal stops printing text before you type the next one.
 
 > **Tip:** Lines in this guide that start with `#` are notes for you. You don't type those.
 
@@ -65,17 +71,34 @@ Python is the language the app is written in. Your computer needs it to run the 
 2. Click **Download Python 3.x** (3.11 or newer).
 3. Open the downloaded file and click **Continue** / **Agree** / **Install** until it's done.
 
+**Linux**
+
+Most Linux systems already have Python. Install it (plus the extra pieces the app needs) with the line for your system:
+
+```
+# Ubuntu / Debian / Mint / Pop!_OS
+sudo apt update && sudo apt install -y python3 python3-venv python3-pip
+
+# Fedora / RHEL / CentOS
+sudo dnf install -y python3 python3-pip
+
+# Arch / Manjaro
+sudo pacman -S --needed python python-pip
+```
+
+> Not sure which one you have? Try the Ubuntu line first. If it says `apt: command not found`, try the Fedora line, then the Arch line.
+
 **Check it worked.** Open a **new** terminal (close the old one first) and run:
 
 ```
 # Windows
 python --version
 
-# Mac
+# Mac and Linux
 python3 --version
 ```
 
-You should see something like `Python 3.12.4`. If you see an error, see [When something goes wrong](#when-something-goes-wrong).
+You should see something like `Python 3.12.4`. You need **3.11 or newer**. If you see an error, see [When something goes wrong](#when-something-goes-wrong).
 
 ---
 
@@ -95,9 +118,21 @@ Git is the tool that downloads ("clones") the app's code.
    ```
 2. If a box pops up offering to install "command line developer tools", click **Install** and wait. If it prints a version number, Git is already installed.
 
+**Linux**
+```
+# Ubuntu / Debian / Mint / Pop!_OS
+sudo apt install -y git
+
+# Fedora / RHEL / CentOS
+sudo dnf install -y git
+
+# Arch / Manjaro
+sudo pacman -S --needed git
+```
+
 **Check it worked.** Open a **new** terminal and run `git --version`. You should see something like `git version 2.45.1`.
 
-> **Don't want to use Git?** On the project's GitHub page, click the green **Code** button, then **Download ZIP**. Unzip the folder into your **Documents** folder and skip to Step 4.
+> **Don't want to use Git?** Go to **https://github.com/Aayush-src/InboundLead**, click the green **Code** button, then **Download ZIP**. Unzip it into your **Documents** folder, rename the folder from `InboundLead-main` to `InboundLead`, open a terminal, run `cd ~/Documents/InboundLead`, and skip to Step 4.
 
 ---
 
@@ -106,15 +141,17 @@ Git is the tool that downloads ("clones") the app's code.
 We'll put the app in your **Documents** folder.
 
 ```
-# Windows and Mac, the same commands:
+# Windows, Mac and Linux, the same commands:
 cd ~/Documents
-git clone https://github.com/<your-username>/inboundLead.git
-cd inboundLead
+git clone https://github.com/Aayush-src/InboundLead.git
+cd InboundLead
 ```
 
-> Replace `https://github.com/<your-username>/inboundLead.git` with the real address of the project. You can find it on the project's GitHub page under the green **Code** button.
+> The project's page is **https://github.com/Aayush-src/InboundLead**.
 
-You now have a folder **Documents → inboundLead** with the app inside.
+You now have a folder **Documents → InboundLead** with the app inside.
+
+> **Linux:** if `cd ~/Documents` says *No such file or directory*, run `mkdir -p ~/Documents` first, then try again.
 
 ---
 
@@ -122,7 +159,7 @@ You now have a folder **Documents → inboundLead** with the app inside.
 
 The app needs some extra pieces. We put them in a private box called a "virtual environment" (`.venv`) so they don't mess with anything else on your computer.
 
-Make sure your terminal is still inside the `inboundLead` folder (if you closed it, run `cd ~/Documents/inboundLead` first). Then:
+Make sure your terminal is still inside the `InboundLead` folder (if you closed it, run `cd ~/Documents/InboundLead` first). Then:
 
 **Windows**
 ```
@@ -130,7 +167,7 @@ python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-**Mac**
+**Mac and Linux**
 ```
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
@@ -218,6 +255,13 @@ cp .env.example .env
 open -e .env
 ```
 
+**Linux**
+```
+cp .env.example .env
+nano .env
+```
+`nano` is a simple editor inside the terminal. Use the arrow keys to move around and just type. (Prefer a normal window? Try `gedit .env` or `gnome-text-editor .env` instead.)
+
 A text editor opens. Fill in these lines (no spaces around `=`, no quote marks):
 
 ```
@@ -234,7 +278,7 @@ GEMINI_API_KEY=AIza...              # if you picked C
 GROQ_API_KEY=gsk_...                # if you picked D
 ```
 
-**Save** the file (**Ctrl + S** on Windows, **⌘ + S** on Mac) and close the editor.
+**Save** the file (**Ctrl + S** on Windows, **⌘ + S** on Mac) and close the editor. In `nano` on Linux: press **Ctrl + O**, then **Enter** to save, then **Ctrl + X** to close.
 
 > You can also type all of these into the app's screens later (Step 9) instead. The `.env` file is just the easiest way. The `.env` file stays on your computer and is never uploaded to GitHub.
 
@@ -242,13 +286,13 @@ GROQ_API_KEY=gsk_...                # if you picked D
 
 ## Step 8: Start the app
 
-In the terminal, inside the `inboundLead` folder:
+In the terminal, inside the `InboundLead` folder:
 
 ```
 # Windows
 python main.py
 
-# Mac
+# Mac and Linux
 python3 main.py
 ```
 
@@ -258,7 +302,7 @@ After a few seconds you'll see a line like:
 Uvicorn running on http://127.0.0.1:8000
 ```
 
-Now open your web browser (Chrome, Edge, Safari…) and go to:
+Now open your web browser (Chrome, Edge, Safari, Firefox…) on the **same computer** and go to:
 
 ### **http://127.0.0.1:8000**
 
@@ -349,11 +393,11 @@ You can also add one person at a time with **✉ New email**.
 
 ```
 # Windows
-cd ~/Documents/inboundLead
+cd ~/Documents/InboundLead
 python main.py
 
-# Mac
-cd ~/Documents/inboundLead
+# Mac and Linux
+cd ~/Documents/InboundLead
 python3 main.py
 ```
 
@@ -363,11 +407,11 @@ Then open **http://127.0.0.1:8000** again. All your leads and settings are still
 
 **Getting updates** (when a new version is published):
 ```
-cd ~/Documents/inboundLead
+cd ~/Documents/InboundLead
 git pull
 # Windows:
 .venv\Scripts\python -m pip install -r requirements.txt
-# Mac:
+# Mac and Linux:
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
@@ -379,9 +423,13 @@ git pull
 |---|---|
 | `python is not recognized` (Windows) | Python wasn't added to PATH. Run the Python installer again, choose **Modify**, then **Next**, and tick **Add Python to environment variables**. Then open a **new** terminal. |
 | `python3: command not found` (Mac) | Install Python again from python.org (Step 1), then open a new terminal. |
-| `git is not recognized` | Install Git (Step 2), then open a **new** terminal. Or use **Download ZIP** instead. |
-| `Virtual environment not found` | You skipped Step 4. Run it from inside the `inboundLead` folder. |
-| `No such file or directory: requirements.txt` | You're in the wrong folder. Run `cd ~/Documents/inboundLead` first. |
+| `python3: command not found` (Linux) | Run the install line for your system from Step 1. |
+| `The virtual environment was not created successfully because ensurepip is not available` (Linux) | Run `sudo apt install -y python3-venv` (on Ubuntu you may need the exact version, e.g. `python3.12-venv`), delete the half-made folder with `rm -rf .venv`, and redo Step 4. |
+| `Python 3.10` or older shown (Linux) | Your system's Python is too old. On Ubuntu run `sudo add-apt-repository ppa:deadsnakes/ppa && sudo apt install python3.12 python3.12-venv`, then use `python3.12` instead of `python3` in Step 4. |
+| `Permission denied` (Mac / Linux) | Don't put `sudo` in front of the app's commands. Only the install lines in Steps 1–2 need `sudo`. If you already did, delete the `.venv` folder (`rm -rf .venv`) and redo Step 4 without `sudo`. |
+| `git is not recognized` / `git: command not found` | Install Git (Step 2), then open a **new** terminal. Or use **Download ZIP** instead. |
+| `Virtual environment not found` | You skipped Step 4. Run it from inside the `InboundLead` folder. |
+| `No such file or directory: requirements.txt` | You're in the wrong folder. Run `cd ~/Documents/InboundLead` first. |
 | **Test login** says *Invalid credentials* / *Application-specific password required* | You used your normal Gmail password. Use the 16-letter app password from Step 5, and check the email address is spelled right. |
 | **Test login** fails on a work or school account | The administrator may block app passwords. Ask them, or use a personal Gmail. |
 | The AI test says the key is missing or invalid | Check the key is pasted completely (no spaces) next to the right provider, and that **Provider** on the Agent tab matches the key. Restart the app after editing `.env`. |
